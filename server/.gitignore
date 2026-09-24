@@ -1,0 +1,15 @@
+node_modules/
+
+# secrets (keep the template tracked)
+.env
+.env.*
+!.env.example
+
+# uploaded and generated data
+uploads/
+tmp/
+*.csv
+*.tsv
+
+*.log
+Thumbs.db
