@@ -6,11 +6,13 @@ let client;
 let database;
 let connectingPromise;
 
+// Connect to MongoDB and return the database instance.
 export async function connectMongoDB() {
   if (database) {
     return database;
   }
 
+// Ensure that the MongoDB URI is provided in the environment variables.
   if (!env.mongodbUri) {
     throw new Error(
       'MONGODB_URI is required for Week 4 ingestion. Configure it in server/.env.',

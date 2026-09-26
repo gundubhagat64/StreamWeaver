@@ -2,6 +2,8 @@ import dotenv from 'dotenv';
 
 dotenv.config();
 
+// Read an integer from the environment variables, with a fallback and minimum value.
+
 function readInteger(name, fallback, minimum = 1) {
   const rawValue = process.env[name] ?? String(fallback);
   const value = Number.parseInt(rawValue, 10);
@@ -14,7 +16,7 @@ function readInteger(name, fallback, minimum = 1) {
 
   return value;
 }
-
+// Read a string from the environment variables, with a fallback.
 const clientOrigin =
   process.env.CLIENT_ORIGIN?.trim() ||
   'http://localhost:5173';
