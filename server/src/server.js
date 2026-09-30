@@ -5,10 +5,12 @@ import app from './app.js';
 import env from './config/env.js';
 import { closeMongoDB } from './config/mongodb.js';
 
+// Import the upload cleanup service and socket server initialization functions
 import {
   initializeUploadLifecycle,
 } from './services/uploadCleanupService.js';
 
+// Import the socket server initialization and cleanup functions
 import {
   closeSocketServer,
   initializeSocketServer,
@@ -16,10 +18,13 @@ import {
 
 process.title = 'streamweaver-backend';
 
+// Read the package.json to get the version number for logging
+
 const pkg = JSON.parse(
   fs.readFileSync(new URL('../package.json', import.meta.url), 'utf8'),
 );
 
+// Initialize the upload lifecycle and socket server
 const stopUploadLifecycle =
   await initializeUploadLifecycle();
 
@@ -30,6 +35,7 @@ initializeSocketServer(
   env.clientOrigin,
 );
 
+// Start the server and log the relevant information
 server.listen(
   env.port,
   () => {
@@ -86,6 +92,7 @@ server.listen(
   },
 );
 
+// Handle server errors and log them for debugging purposes
 server.on(
   'error',
   (error) => {
