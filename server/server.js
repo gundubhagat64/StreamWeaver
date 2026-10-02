@@ -15,10 +15,21 @@ const io = new Server(server, {
   cors: { origin: "http://localhost:5173" }
 });
 
-app.post("/upload", uploadFile);
+app.post("/upload", (req, res) => {
+  uploadFile(req, res, io);
+});
 
 io.on("connection", (socket) => {
   console.log("Client connected:", socket.id);
+
+  socket.on("join-job", (jobId) => {
+    socket.join(jobId);
+    console.log(`Socket ${socket.id} joined job ${jobId}`);
+  });
+
+  socket.on("job-status", (data) => {
+    io.to(data.jobId).emit("job-status", data);
+  });
 });
 
 connectDB();
