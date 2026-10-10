@@ -1,5 +1,5 @@
 ﻿import assert from 'node:assert/strict';
-import { executeSandboxTransformation } from '../server/src/services/sandboxService.js';
+import { executeSandboxTransformation } from './src/services/sandboxService.js';
 
 async function runTests() {
   // Test 1: Successful JavaScript transformation
