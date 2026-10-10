@@ -4,12 +4,12 @@
   "description": "",
   "main": "index.js",
   "scripts": {
-    "test": "echo \"Error: no test specified\" && exit 1",
-    "start": "node --no-node-snapshot src/server.js",
-    "dev": "nodemon --exec \"node --no-node-snapshot\" src/server.js",
-    "test:sandbox": "node --no-node-snapshot ../scripts/week3-sandbox-tests.mjs",
-    "test:week4": "node --no-node-snapshot scripts/week4-tests.mjs"
-  },
+  "test": "echo \"Error: no test specified\" && exit 1",
+  "start": "node --no-node-snapshot src/server.js",
+  "dev": "nodemon --exec \"node --no-node-snapshot\" src/server.js",
+  "test:sandbox": "node --no-node-snapshot sandbox-test.mjs",
+  "test:week4": "node --no-node-snapshot scripts/week4-tests.mjs"
+},
   "keywords": [],
   "author": "",
   "license": "ISC",
