@@ -4,12 +4,12 @@
   "description": "",
   "main": "index.js",
   "scripts": {
-  "test": "echo \"Error: no test specified\" && exit 1",
-  "start": "node --no-node-snapshot src/server.js",
-  "dev": "nodemon --exec \"node --no-node-snapshot\" src/server.js",
-  "test:sandbox": "node --no-node-snapshot sandbox-test.mjs",
-  "test:week4": "node --no-node-snapshot scripts/week4-tests.mjs"
-},
+    "test": "echo \"Error: no test specified\" && exit 1",
+    "start": "node --no-node-snapshot src/server.js",
+    "dev": "nodemon --exec \"node --no-node-snapshot\" src/server.js",
+    "test:sandbox": "node --no-node-snapshot sandbox-test.mjs",
+    "test:week4": "node --no-node-snapshot scripts/week4-tests.mjs"
+  },
   "keywords": [],
   "author": "",
   "license": "ISC",
@@ -25,6 +25,7 @@
     "socket.io": "^4.8.3"
   },
   "devDependencies": {
-    "nodemon": "^3.1.14"
+    "nodemon": "^3.1.14",
+    "socket.io-client": "^4.8.4"
   }
 }
