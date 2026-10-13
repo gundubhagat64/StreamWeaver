@@ -122,10 +122,38 @@
 // export default App
 
 
+
 import { useState } from "react";
+import { FixedSizeList } from "react-window";
 import "./App.css";
 
 const API_URL = "http://localhost:5000";
+
+const DESTINATION_FIELDS = [
+  "firstName",
+  "lastName",
+  "email",
+  "phone",
+  "city",
+  "country",
+  "age",
+  "fullName",
+];
+
+function VirtualRow({ index, style, data }) {
+  const row = data.rows[index];
+
+  return (
+    <div className="virtual-row" style={style}>
+      <div className="virtual-cell row-number">{row.rowNumber ?? index + 1}</div>
+      {data.columns.map((column, columnIndex) => (
+        <div className="virtual-cell" key={column.key}>
+          {String(row.values?.[columnIndex] ?? "")}
+        </div>
+      ))}
+    </div>
+  );
+}
 
 export default function App() {
   const [file, setFile] = useState(null);
@@ -133,6 +161,8 @@ export default function App() {
   const [preview, setPreview] = useState(null);
   const [error, setError] = useState("");
   const [loading, setLoading] = useState(false);
+  const [mappings, setMappings] = useState({});
+  const [transformations, setTransformations] = useState({});
 
   async function readResponse(response) {
     const result = await response.json();
@@ -156,32 +186,27 @@ export default function App() {
     setError("");
     setUpload(null);
     setPreview(null);
+    setMappings({});
+    setTransformations({});
 
     try {
-      // Step 1: Upload the file.
       const formData = new FormData();
       formData.append("file", file);
 
       const uploadResponse = await fetch(
         `${API_URL}/api/files/upload`,
-        {
-          method: "POST",
-          body: formData,
-        }
+        { method: "POST", body: formData }
       );
 
       const uploadResult = await readResponse(uploadResponse);
       const uploadedFile = uploadResult.data;
 
       if (!uploadedFile?.uploadId) {
-        throw new Error(
-          "Upload succeeded, but the server did not return an upload ID."
-        );
+        throw new Error("The server did not return an upload ID.");
       }
 
       setUpload(uploadedFile);
 
-      // Step 2: Request a bounded preview from the backend.
       const previewResponse = await fetch(
         `${API_URL}/api/files/${encodeURIComponent(
           uploadedFile.uploadId
@@ -189,8 +214,15 @@ export default function App() {
       );
 
       const previewResult = await readResponse(previewResponse);
+      const previewData = previewResult.data;
 
-      setPreview(previewResult.data);
+      setPreview(previewData);
+
+      const initialMappings = {};
+      for (const column of previewData.columns ?? []) {
+        initialMappings[column.key] = "";
+      }
+      setMappings(initialMappings);
     } catch (err) {
       setError(err.message || "An unexpected error occurred.");
     } finally {
@@ -198,14 +230,39 @@ export default function App() {
     }
   }
 
-  function formatBytes(bytes) {
-    if (bytes == null) return "Unknown size";
-    if (bytes < 1024) return `${bytes} B`;
-    if (bytes < 1024 * 1024) {
-      return `${(bytes / 1024).toFixed(1)} KB`;
-    }
-    return `${(bytes / (1024 * 1024)).toFixed(2)} MB`;
+  function updateMapping(sourceKey, destination) {
+    setMappings((previous) => ({
+      ...previous,
+      [sourceKey]: destination,
+    }));
   }
+
+  function getSampleValue(column, columnIndex) {
+    const value = preview?.rows?.[0]?.values?.[columnIndex] ?? "";
+    const rule = transformations[column.key] ?? "none";
+
+    if (rule === "capitalize") {
+      return String(value)
+        .toLowerCase()
+        .replace(/\b\w/g, (character) => character.toUpperCase());
+    }
+
+    if (rule === "uppercase") {
+      return String(value).toUpperCase();
+    }
+
+    return String(value);
+  }
+
+  const columns = preview?.columns ?? [];
+  const rows = preview?.rows ?? [];
+
+  // The configuration can be sent to a processing endpoint later.
+  const mappingConfiguration = columns.map((column) => ({
+    source: column.key,
+    destination: mappings[column.key] || null,
+    transformation: transformations[column.key] || "none",
+  }));
 
   return (
     <main className="app">
@@ -217,7 +274,6 @@ export default function App() {
             <p>High-throughput, no-code ETL pipeline</p>
           </div>
         </div>
-
         <div className="connection">
           <span className="status-dot" />
           Local development
@@ -228,8 +284,8 @@ export default function App() {
         <span className="eyebrow">DATA PIPELINE WORKSPACE</span>
         <h2>Move massive data. Without the mess.</h2>
         <p>
-          Upload your dataset and inspect its structure before
-          mapping and transforming your data.
+          Upload a dataset, inspect its structure, and map your
+          source columns to your desired output.
         </p>
       </section>
 
@@ -247,7 +303,7 @@ export default function App() {
           <strong>{file ? file.name : "Choose your dataset"}</strong>
           <span>
             {file
-              ? formatBytes(file.size)
+              ? `${(file.size / (1024 * 1024)).toFixed(2)} MB`
               : "Select a CSV file from your computer"}
           </span>
           <input
@@ -288,88 +344,142 @@ export default function App() {
       </section>
 
       {preview && (
-        <section className="workspace preview-workspace">
-          <div className="section-heading">
-            <div>
-              <h3>Dataset preview</h3>
-              <p>
-                Showing {preview.previewCount} preview rows
-                {preview.hasMoreRows
-                  ? ` · More rows exist in the dataset`
-                  : " · End of dataset"}
-              </p>
+        <>
+          <section className="workspace preview-workspace">
+            <div className="section-heading">
+              <div>
+                <h3>Virtualized data preview</h3>
+                <p>
+                  {rows.length} preview rows · {columns.length} columns
+                </p>
+              </div>
+              <span className="file-badge">PREVIEW</span>
             </div>
-            <span className="file-badge">
-              {preview.columns.length} columns
-            </span>
-          </div>
 
-          {preview.warnings?.length > 0 && (
-            <div className="message">
-              {preview.warnings.map((warning) => (
-                <p key={warning.code}>{warning.message}</p>
+            {columns.length > 0 && rows.length > 0 ? (
+              <div className="virtual-table">
+                <div className="virtual-header">
+                  <div className="virtual-cell row-number">#</div>
+                  {columns.map((column) => (
+                    <div className="virtual-cell" key={column.key}>
+                      {column.label}
+                    </div>
+                  ))}
+                </div>
+
+                <FixedSizeList
+                  height={360}
+                  width="100%"
+                  itemCount={rows.length}
+                  itemSize={42}
+                  itemData={{ rows, columns }}
+                  overscanCount={5}
+                >
+                  {VirtualRow}
+                </FixedSizeList>
+              </div>
+            ) : (
+              <p>No data rows were found in this preview.</p>
+            )}
+
+            <p className="preview-note">
+              Only visible rows and a small overscan region are rendered.
+            </p>
+          </section>
+
+          <section className="workspace mapping-workspace">
+            <div className="section-heading">
+              <div>
+                <h3>Column mapping</h3>
+                <p>
+                  Choose a destination field and optional transformation
+                  for each source column.
+                </p>
+              </div>
+            </div>
+
+            <div className="mapping-list">
+              {columns.map((column, index) => (
+                <div className="mapping-item" key={column.key}>
+                  <div className="mapping-source">
+                    <span className="mapping-label">SOURCE</span>
+                    <strong>{column.label}</strong>
+                    <small>
+                      Sample: {String(rows[0]?.values?.[index] ?? "")}
+                    </small>
+                  </div>
+
+                  <div className="mapping-arrow">→</div>
+
+                  <div className="mapping-controls">
+                    <label>
+                      <span className="mapping-label">DESTINATION</span>
+                      <select
+                        value={mappings[column.key] ?? ""}
+                        onChange={(event) =>
+                          updateMapping(column.key, event.target.value)
+                        }
+                      >
+                        <option value="">Skip this column</option>
+                        {DESTINATION_FIELDS.map((field) => (
+                          <option key={field} value={field}>
+                            {field}
+                          </option>
+                        ))}
+                      </select>
+                    </label>
+
+                    <label>
+                      <span className="mapping-label">TRANSFORMATION</span>
+                      <select
+                        value={transformations[column.key] ?? "none"}
+                        onChange={(event) =>
+                          setTransformations((previous) => ({
+                            ...previous,
+                            [column.key]: event.target.value,
+                          }))
+                        }
+                      >
+                        <option value="none">None</option>
+                        <option value="uppercase">Uppercase</option>
+                        <option value="capitalize">Capitalize words</option>
+                      </select>
+                    </label>
+
+                    <div className="sample-output">
+                      <span className="mapping-label">SAMPLE OUTPUT</span>
+                      <strong>{getSampleValue(column, index) || "—"}</strong>
+                    </div>
+                  </div>
+                </div>
               ))}
             </div>
-          )}
 
-          {preview.columns.length > 0 && preview.rows.length > 0 ? (
-            <div className="table-scroll">
-              <table className="preview-table">
-                <thead>
-                  <tr>
-                    <th>#</th>
-                    {preview.columns.map((column) => (
-                      <th key={column.key}>{column.label}</th>
-                    ))}
-                  </tr>
-                </thead>
-                <tbody>
-                  {preview.rows.map((row) => (
-                    <tr key={row.rowNumber}>
-                      <td>{row.rowNumber}</td>
-                      {preview.columns.map((column, index) => (
-                        <td key={column.key}>
-                          {row.values[index] ?? ""}
-                        </td>
-                      ))}
-                    </tr>
-                  ))}
-                </tbody>
-              </table>
-            </div>
-          ) : (
-            <p>No data rows were found in the preview.</p>
-          )}
+            <button
+              className="upload-button"
+              onClick={() => {
+                const invalid = Object.values(mappings).filter(Boolean);
+                if (new Set(invalid).size !== invalid.length) {
+                  setError("Each destination field can only be mapped once.");
+                  return;
+                }
 
-          <p className="preview-note">
-            This is a bounded preview, not the full dataset.
-          </p>
-        </section>
+                setError("");
+                console.log("Mapping configuration:", mappingConfiguration);
+                alert(
+                  "Mapping configuration prepared. Full dataset processing is the next step."
+                );
+              }}
+            >
+              Validate mapping
+            </button>
+            <p className="preview-note">
+              This currently prepares the mapping configuration and previews
+              transformations. It does not yet transform or save the full dataset.
+            </p>
+          </section>
+        </>
       )}
-
-      <section className="pipeline">
-        <div className="pipeline-step active">
-          <span>01</span>
-          <div>
-            <strong>Upload</strong>
-            <small>Import your file</small>
-          </div>
-        </div>
-        <div className={`pipeline-step ${preview ? "active" : ""}`}>
-          <span>02</span>
-          <div>
-            <strong>Preview</strong>
-            <small>Inspect CSV records</small>
-          </div>
-        </div>
-        <div className="pipeline-step">
-          <span>03</span>
-          <div>
-            <strong>Transform</strong>
-            <small>Next: map columns</small>
-          </div>
-        </div>
-      </section>
 
       <footer>
         StreamWeaver · Built for large-scale data processing

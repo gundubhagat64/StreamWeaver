@@ -502,3 +502,160 @@ footer {
     gap: 18px;
   }
 }
+
+.virtual-table {
+  overflow: hidden;
+  border: 1px solid #29334a;
+  border-radius: 10px;
+}
+
+.virtual-header,
+.virtual-row {
+  display: flex;
+  width: 100%;
+}
+
+.virtual-header {
+  overflow: hidden;
+  background: #202943;
+}
+
+.virtual-header .virtual-cell {
+  color: #c7c1ff;
+  font-weight: 700;
+}
+
+.virtual-cell {
+  flex: 1 1 0;
+  min-width: 140px;
+  padding: 12px;
+  overflow: hidden;
+  border-right: 1px solid #29334a;
+  color: #d5dced;
+  font-size: 12px;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.virtual-header .virtual-cell {
+  height: 42px;
+}
+
+.virtual-row {
+  background: #121a2d;
+}
+
+.virtual-row:nth-child(even) {
+  background: #151f34;
+}
+
+.row-number {
+  flex: 0 0 55px;
+  min-width: 55px;
+  color: #929bb2;
+}
+
+.mapping-workspace {
+  margin-top: 28px;
+}
+
+.mapping-list {
+  display: flex;
+  flex-direction: column;
+  gap: 14px;
+}
+
+.mapping-item {
+  display: grid;
+  grid-template-columns: minmax(130px, 0.7fr) 24px minmax(0, 1.5fr);
+  align-items: start;
+  gap: 12px;
+  padding: 16px;
+  border: 1px solid #29334a;
+  border-radius: 12px;
+  background: #0d1426;
+}
+
+.mapping-source,
+.mapping-controls,
+.mapping-source small {
+  min-width: 0;
+}
+
+.mapping-source strong,
+.mapping-source small {
+  display: block;
+  overflow-wrap: anywhere;
+}
+
+.mapping-source strong {
+  margin-top: 8px;
+}
+
+.mapping-source small {
+  margin-top: 8px;
+  color: #929bb2;
+  font-size: 11px;
+}
+
+.mapping-label {
+  display: block;
+  margin-bottom: 7px;
+  color: #929bb2;
+  font-size: 10px;
+  font-weight: 700;
+  letter-spacing: 1px;
+}
+
+.mapping-arrow {
+  padding-top: 26px;
+  color: #a69bff;
+  text-align: center;
+}
+
+.mapping-controls {
+  display: grid;
+  gap: 12px;
+}
+
+.mapping-controls select {
+  width: 100%;
+  min-width: 0;
+  padding: 10px;
+  border: 1px solid #39445f;
+  border-radius: 8px;
+  background: #171f34;
+  color: #e9edf7;
+}
+
+.sample-output {
+  padding: 10px;
+  border-radius: 8px;
+  background: #19263a;
+}
+
+.sample-output strong {
+  display: block;
+  overflow-wrap: anywhere;
+  font-size: 12px;
+}
+
+@media (max-width: 650px) {
+  .mapping-item {
+    grid-template-columns: 1fr;
+  }
+
+  .mapping-arrow {
+    padding: 0;
+    text-align: left;
+  }
+
+  .virtual-table {
+    overflow-x: auto;
+  }
+
+  .virtual-header,
+  .virtual-row {
+    min-width: max-content;
+  }
+}
